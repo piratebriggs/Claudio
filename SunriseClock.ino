@@ -1,44 +1,14 @@
 /**
  * GLOBAL PIN CONFIGURATION
  */
-
-const int TFT_CS = 15;
-const int TFT_DC = 4;
-const int TFT_MOSI = 23;
-const int TFT_SLK = 18;
-const int TFT_RST = 2;
-const int TFT_LED = 19;     
-const int BUZZER = 5; 
-const int LUX_SDA = 21;
-const int LUX_SCL = 22;
 const int DHT_OUT = 27;
+
 /**
  * EEPROM libraries and resources
  */
 #include "EEPROM.h"
 #define EEPROM_SIZE 64
  
-/**
- * ILI9341 TFT libraries and resources
- */
-#include "SPI.h"
-#include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"
-//                                      cs  dc  mosi slk rst
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_SLK, TFT_RST);
-
-#define ILI9341_LCYAN   0x0418
-#define ILI9341_LORANGE 0xFC08
-#define ILI9341_LGREEN  0x87F0
-#define ILI9341_LGRAY   0x8410
-
-/**
- * BH1750 Lux meter libraries and resources
- */
-#include <BH1750FVI.h>
-// Create the Lightsensor instance
-BH1750FVI LightSensor(BH1750FVI::k_DevModeContHighRes); 
-
 /**
  * DHT-11 Temp and humidity sensor  libraries and resources
  */
@@ -53,7 +23,7 @@ DHT dht(DHT_OUT, DHTTYPE);
 //Absolute path to file containing WiFi credentials
 //const char* ssid       = "MyApSSID";
 //const char* password   = "MyApPassphrase";
-#include <c:\datos\desarrollo\arduino\credentials.h>
+#include <wifi_credentials.h>
 const int connTimeout = 10; //Seconds
 
 WiFiServer wifiServer(1234);
@@ -78,9 +48,6 @@ const int resolution = 8;
  */
 const int xTime = 14;
 const int yTime = 14;
-const int tftBG = ILI9341_BLACK;
-const int tftTimeFG = ILI9341_RED;
-
 
  
 /**
@@ -147,51 +114,25 @@ void setup() {
   /**
    * TFT DISPLAY
    */
-  //Background light PWM
-  ledcSetup(tftledChannel, freq, resolution);
-  ledcAttachPin(TFT_LED, tftledChannel);
-  //Start with high intensity 
-  setBGLuminosity(255);
-  tft.begin();
-  tft.setRotation(3);
   yield();
   
-  //Boot screen
-  tft.fillScreen(ILI9341_BLACK);
-  yield();
-  tft.setTextSize(4);
-  tft.setTextColor(ILI9341_LORANGE);
-  tft.println("Claudio!");
-  tft.setTextSize(1);
-  tft.setTextColor(ILI9341_WHITE);
-  tft.println("");
-  tft.println("Booting...");
-  tft.println("Setting up devices...");
-  /**
-   * BUZZER
-   */
-  pinMode(BUZZER, OUTPUT); 
-  /**
-   * Light sensor
-   */
-  LightSensor.begin(); 
   /**
    * Temperature and humidity sensor
    */
   dht.begin();    
-  tft.print("Connecting to WiFi AP "); 
-  tft.println(ssid);     
+//  tft.print("Connecting to WiFi AP "); 
+//  tft.println(ssid);     
   /**
    * Wifi connect
    */
   wifiConnect();
   if(onWifi == true){
-    tft.print("   Connection succeed, obtained IP ");
-    tft.println(WiFi.localIP());
+//    tft.print("   Connection succeed, obtained IP ");
+//    tft.println(WiFi.localIP());
   }else{
-    tft.println("   Connection failed. Unexpected operation results.");
+    //tft.println("   Connection failed. Unexpected operation results.");
   }
-  tft.println("Obtaining NTP time from remote server...");
+//  tft.println("Obtaining NTP time from remote server...");
   /**
    * NTP Time
    */
@@ -201,43 +142,18 @@ void setup() {
   /**
    * Wifi Server for configuration
    */
-  tft.println("Starting remote configuration server...");
+//  tft.println("Starting remote configuration server...");
   wifiServer.begin();
 
-  tft.println("End of booting process.");
+//  tft.println("End of booting process.");
    
-  //Wait twenty seconds or until the user touches a button
-  waitTouch(bootWait);
-
-  //Prepare screen for normal operation
-  setBGLuminosity(0);
-  tft.fillScreen(ILI9341_BLACK);
-  yield();
-
-  //Paint elements
-  displayTime();
-  displayDate();
-  displayAlarm();
-  displayTemp();
-  displayHumi();
-  displayLux();
-  displayButton(0, false, false);
-  displayButton(1, false, false);
-  displayButton(2, false, false);
-  setBGLuminosity(255);
-  /** 
-   *  TESTING
-   */
-
 
 }
 
 void loop() {
-  getCurrentLux();
   getCurrentTemp();
   getCurrentHumi();
   refreshTime();
-  readTouch();
   configMode();
   delay(100);
 }
@@ -379,7 +295,7 @@ String refreshTime(){
  * Displays time string erasing the previous one
  */
 void displayTime(){
-  tft.setTextSize(10);
+/*  tft.setTextSize(10);
   tft.setCursor(xTime, yTime);
   tft.setTextColor(tftBG);
   yield();
@@ -389,24 +305,24 @@ void displayTime(){
   tft.setTextColor(tftTimeFG);
   yield();
   tft.println(currTime);
-  yield();
+  yield();*/
 }
 /**
  * Displays date string 
  */
 void displayDate(){
-  tft.fillRect(14, 94, 192, 30, ILI9341_BLACK);
+/*  tft.fillRect(14, 94, 192, 30, ILI9341_BLACK);
   tft.setTextSize(3);
   tft.setCursor(26, 94);
   tft.setTextColor(ILI9341_LGREEN);
   yield();
-  tft.println(currDate);
+  tft.println(currDate);*/
 }
 /**
  * Displays temperature
  */
 void displayTemp(){
-  int bgColor = 0;
+/*  int bgColor = 0;
   if(currTemp == prevTemp){
     bgColor = ILI9341_LGREEN;
   }else if(currTemp < prevTemp){
@@ -425,13 +341,13 @@ void displayTemp(){
   tft.print("TEMP");
   tft.setTextSize(3);
   tft.setCursor(16, 200);
-  tft.print(currTemp);
+  tft.print(currTemp);*/
 }
 /**
  * Displays relative humidity
  */
 void displayHumi(){
-  int bgColor = 0;
+/*  int bgColor = 0;
   if(currHumi == prevHumi){
     bgColor = ILI9341_LGREEN;
   }else if(currHumi < prevHumi){
@@ -449,40 +365,13 @@ void displayHumi(){
   tft.print("H.R.");
   tft.setTextSize(3);
   tft.setCursor(115, 200);
-  tft.print(currHumi);
-}
-/**
- * Displays lux 
- */
-void displayLux(){
-  int bgColor = 0;
-  if(currLux == prevLux){
-    bgColor = ILI9341_LGREEN;
-  }else if(currLux < prevLux){
-    bgColor = ILI9341_LCYAN;
-  }else{
-    bgColor = ILI9341_LORANGE;
-  }
-  tft.setTextColor(ILI9341_BLACK);
-  yield();
-  tft.fillRect(212, 170, 92, 60, bgColor);
-  tft.drawRect(212, 170, 92, 60, ILI9341_WHITE);
-  yield();
-  tft.setTextSize(2);
-  tft.setCursor(242, 174);
-  tft.print("LUX");
-  tft.setTextSize(3);
-  tft.setCursor(214, 200);
-  char cLux[5]=" ";
-  sprintf(cLux, "%05d", currLux); 
-  //currTime = (char*)cTime;
-  tft.print(cLux);
+  tft.print(currHumi);*/
 }
 /**
  * Displays Alarm Time 
  */
 void displayAlarm(){
-  if(doAlarm == true){
+/*  if(doAlarm == true){
     tft.setTextColor(ILI9341_YELLOW);
   }else{
     tft.setTextColor(ILI9341_LGRAY);
@@ -492,105 +381,7 @@ void displayAlarm(){
   yield();
   tft.setTextSize(3);
   tft.setCursor(214, 133);
-  tft.print(alarmTime);
-}
-/**
- * Sets button status
- * 0 - Left
- * 1 - Middle
- * 2 - Right
- */
-void displayButton(int button, bool activated, bool longTouch){
-  int bgColor;
-  int x;
-  if(activated == true){
-    if(longTouch == true){
-      bgColor = ILI9341_RED;
-    }else{
-      bgColor = ILI9341_YELLOW;
-    }
-  }else{
-    bgColor = ILI9341_LGRAY;
-  }
-  yield();
-  x = 128 + (button * 30);
-  tft.fillCircle(x, 144, 11,bgColor);
-  tft.drawCircle(x, 144, 11,ILI9341_WHITE);
-  yield();
-}
-
-
-/**
- * Sets TFT background luminosity (0-255)
- */
-void setBGLuminosity(int level){
-  ledcWrite(tftledChannel, level);
-}
-/**
- * Plays beep on buzzer a number of times
- */
-void playBuzzer(int times){
-  onAlarm = true;
-  for(int t=0; t< times; t++){
-    if(onAlarm == false){
-      break;
-    }
-    for(int i=0; i< 200; i++)
-    {
-      digitalWrite(BUZZER, HIGH);
-      delay(1);
-      digitalWrite(BUZZER, LOW);
-      delay(1);
-    }
-    //Read touch sensor to check if alarm is stopped manually
-    readTouch();
-    //Check if remote management is requested (to stop alarm remotely)
-    configMode();
-    delay(10);
-  }
-}
-/**
- * Waits for the user to touch a button
- * Timeout in seconds (aprox.)
- */
-void waitTouch(int timeout){ 
-  waitingToTouch = true;
-  for(int t=0; t< (timeout * 3.6); t++){
-    readTouch();
-    if(waitingToTouch == false){
-      break;
-    }
-    delay(100);
-  }
-}
-/**
- * Returns ambient light luxes 
- */
-uint16_t getCurrentLux(){
-  prevLux = currLux;
-  currLux = LightSensor.GetLightIntensity();
-  if(prevLux != currLux){
-    luxChanged(prevLux , currLux);
-  }
-  return currLux;
-}
-/**
- * Calculates and sets screen backlight brightness
- */
-void calculateAndSetBGLuminosity(uint16_t currLux){
-  int finalLux = currLux;
-  if(finalLux > maxLux){
-    finalLux = maxLux;
-  }
-  if(finalLux < minLux){
-    finalLux = minLux;
-  }
-  double levelsWidth = maxLux - minLux;
-  double level = finalLux - minLux;
-  double ratio = level / levelsWidth;
-  double brightnessWidth = 255 - minBrightness;
-  int brightnessValue = (brightnessWidth * ratio) + minBrightness;
-  setBGLuminosity(brightnessValue);
+  tft.print(alarmTime);*/
 }
 /**
  * Returns temperature
@@ -615,77 +406,6 @@ float getCurrentHumi(){
   return currHumi;
 }
 /**
- * Reads touch buttons status and launches events
- */
-void readTouch(){
-  int avgTouchR = 0; int avgTouchM = 0; int avgTouchL = 0;
-  for(int i=0; i< touchReadings; i++){
-    avgTouchR += touchRead(pinTouchR);
-    avgTouchM += touchRead(pinTouchM);
-    avgTouchL += touchRead(pinTouchL);
-  }   
-  yield();
-  avgTouchR = avgTouchR / touchReadings;
-  avgTouchM = avgTouchM / touchReadings;
-  avgTouchL = avgTouchL / touchReadings;
-
-  //LEFT BUTTON  
-  if(avgTouchL < thresholdTouchL){
-    if(statusTouchL == 0){
-      lastTouchL = millis();
-      touchL();
-      statusTouchL = 1;
-    }else if(statusTouchL == 1){
-      if((millis() - lastTouchL) > (longTouchThreshold * 100)){
-        statusTouchL = 2;
-        touchLongL();
-      }
-    }  
-  }else{
-    if(statusTouchL != 0){
-      releaseL();
-    }
-    statusTouchL = 0;    
-  }    
-  //MIDDLE BUTTON  
-  if(avgTouchM < thresholdTouchM){
-    if(statusTouchM == 0){
-      lastTouchM = millis();
-      touchM();
-      statusTouchM = 1;
-    }else if(statusTouchM == 1){
-      if((millis() - lastTouchM) > (longTouchThreshold * 100)){
-        statusTouchM = 2;
-        touchLongM();
-      }
-    }  
-  }else{
-    if(statusTouchM != 0){
-      releaseM();
-    }
-    statusTouchM = 0;    
-  }  
-  //RIGHT BUTTON  
-  if(avgTouchR < thresholdTouchR){
-    if(statusTouchR == 0){
-      lastTouchR = millis();
-      touchR();
-      statusTouchR = 1;
-    }else if(statusTouchR == 1){
-      if((millis() - lastTouchR) > (longTouchThreshold * 100)){
-        statusTouchR = 2;
-        touchLongR();
-      }
-    }  
-  }else{
-    if(statusTouchR != 0){
-      releaseR();
-    }
-    statusTouchR = 0;    
-  }  
-}
-
-/**
  *  EVENTS
  */ 
 /**
@@ -697,7 +417,7 @@ void timeChanged(String prevTime, String currTime){
   if(currTime == alarmTime){
     if(doAlarm == true){
       if(onAlarm == false){
-        playBuzzer(alarmBeeps);
+        //playBuzzer(alarmBeeps);
         doAlarm = false;
       }
     }
@@ -712,15 +432,6 @@ void dateChanged(String prevDate, String currDate){
   displayDate();
   //New day, lets check for the next alarm
   checkAlarm();
-}
-/**
- * Event for change of ambient light
- */
-void luxChanged(uint16_t prevLux, uint16_t currLux){
-  //Serial.print("luxChanged event fired! ");
-  //Serial.println(currLux);
-  displayLux();
-  calculateAndSetBGLuminosity(currLux);
 }
 
 /**
@@ -738,91 +449,6 @@ void humiChanged(float prevHumi, float currHumi){
   //Serial.println("humiChanged event fired!");
   displayHumi();
   
-}
-/**
- * Touch buttons events
- */
-void touchR(){
-  Serial.println("Touch Right");
-  displayButton(2, true, false);
-  touchAny();
-}
-void touchLongR(){
-  Serial.println("Touch Long Right");
-  displayButton(2, true, true);
-  touchLongAny();
-}
-void releaseR(){
-  Serial.println("Release Right");
-  displayButton(2, false, false);
-  releaseAny();
-}
-
-void touchM(){
-  Serial.println("Touch Middle");
-  displayButton(1, true, false);
-  touchAny();
-}
-void touchLongM(){
-  Serial.println("Touch Long Middle");
-  displayButton(1, true, true);
-  touchLongAny();
-}
-void releaseM(){
-  Serial.println("Release Middle");
-  displayButton(1, false, false);
-  releaseAny();
-}
-
-void touchL(){
-  Serial.println("Touch Left");
-  displayButton(0, true, false);
-  touchAny();
-}
-void touchLongL(){
-  Serial.println("Touch Long Left");
-  displayButton(0, true, true);
-  touchLongAny();
-}
-void releaseL(){
-  Serial.println("Release Left");
-  displayButton(0, false, false);
-  releaseAny();
-} 
-
-void touchAny(){
-  waitingToTouch = false;
-  if(onAlarm == true){
-      onAlarm = false;
-      doAlarm = false;
-      displayAlarm();
-  }
-}
-void touchLongAny(){
-  Serial.println("Touch Long Any");
-  //Extra alarma functionalities (Alarm Off, Alarm On and Snooze)
-  //Check if event occurs during first alarm minute
-  if(alarmTime == currTime){
-    //Add Snooze time to alarmTime
-    alarmTime = addSnooze(alarmTime, snoozeMinutes);
-    doAlarm = true;
-    displayAlarm();
-  }else{
-    //Switch On/Off alarm
-    doAlarm = !doAlarm;
-    displayAlarm();
-  }
-
-  //Only for testing!!!
-  //Set alarm time equal to current time if left and right buttons are longTouched simultaneously
-  if(statusTouchL == 2 && statusTouchR == 2){
-    alarmTime = currTime;
-    displayAlarm();
-    timeChanged(currTime, currTime);
-  }
-}
-void releaseAny(){
-
 }
 void configOn(){
   Serial.println("Entered config mode");
@@ -1180,7 +806,7 @@ void setMaxLux(byte value){
   EEPROM.write(8, value);
   EEPROM.commit();
   maxLux = value;
-  calculateAndSetBGLuminosity(currLux);
+  //calculateAndSetBGLuminosity(currLux);
 }
 /* minLux
  * Address 9
@@ -1196,7 +822,7 @@ void setMinLux(byte value){
   EEPROM.write(9, value);
   EEPROM.commit();
   minLux = value;
-  calculateAndSetBGLuminosity(currLux);
+  //calculateAndSetBGLuminosity(currLux);
 }
 /* minBrightness
  * Address 10
@@ -1212,7 +838,7 @@ void setMinBrightness(byte value){
   EEPROM.write(10, value);
   EEPROM.commit();
   minBrightness = value;
-  calculateAndSetBGLuminosity(currLux);
+  //calculateAndSetBGLuminosity(currLux);
 }
 /* alarmHour
  * Address 11
