@@ -1,7 +1,7 @@
 /**
  * GLOBAL PIN CONFIGURATION
  */
-const int DHT_OUT = 27;
+const int DHT_OUT = 5;
 
 /**
  * EEPROM libraries and resources
@@ -16,10 +16,20 @@ const int DHT_OUT = 27;
 #define DHTTYPE DHT11
 DHT dht(DHT_OUT, DHTTYPE);       
 
+/**
+ * LCD over I2C via PCF8574
+ */
+#include <Wire.h>
+#include <hd44780.h>
+#include <hd44780ioClass/hd44780_I2Cexp.h> // include i/o class header
+
+hd44780_I2Cexp lcd; // declare lcd object: auto locate & config display for hd44780 chip
+
 /**    
  *  WIFI Libraries and resources   
  */
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
 //Absolute path to file containing WiFi credentials
 //const char* ssid       = "MyApSSID";
 //const char* password   = "MyApPassphrase";
@@ -34,8 +44,8 @@ WiFiServer wifiServer(1234);
  */
 #include "time.h"
 const char* ntpServer = "pool.ntp.org";
-const long  gmtOffset_sec = 3600;
-const int   daylightOffset_sec = 3600;
+const long  gmtOffset_sec = 0;
+const int   daylightOffset_sec = 0;
  
 /**
  * PWM Constants
@@ -43,11 +53,6 @@ const int   daylightOffset_sec = 3600;
 const int freq = 5000;
 const int tftledChannel = 0;
 const int resolution = 8;
-/**
- * TFT Display Constants 
- */
-const int xTime = 14;
-const int yTime = 14;
 
  
 /**
@@ -64,8 +69,8 @@ float    currTemp = 0;
 float    prevHumi = 0;
 float    currHumi = 0;
 bool     onWifi = false;
-String   weekDays[] = {"", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"};
-String   months[] = {"", " Ene ", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
+String   weekDays[] = {"", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sum"};
+String   months[] = {"", " Jan ", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 int      pinTouchR = 14; 
 int      pinTouchM = 13; 
 int      pinTouchL = 12;
@@ -101,21 +106,27 @@ void setup() {
    * Serial port
    */
   Serial.begin(115200);
+  Serial.setDebugOutput(true);
   
   /**
    * EEPROM
    */
-  EEPROM.begin(EEPROM_SIZE);
+  //EEPROM.begin(EEPROM_SIZE);
   /**
    * Loads EEPROM configuration
    */
-  loadConfiguration();
+  //loadConfiguration();
   
   /**
    * TFT DISPLAY
    */
-  yield();
+  // Switch on the backlight
+  //pinMode ( BACKLIGHT_PIN, OUTPUT );
+  //digitalWrite ( BACKLIGHT_PIN, HIGH );
   
+  lcd.begin(16,2);               // initialize the lcd 
+  lcd.home ();                   // go home
+    
   /**
    * Temperature and humidity sensor
    */
@@ -132,7 +143,7 @@ void setup() {
   }else{
     //tft.println("   Connection failed. Unexpected operation results.");
   }
-//  tft.println("Obtaining NTP time from remote server...");
+  Serial.printf("Obtaining NTP time from remote server...");
   /**
    * NTP Time
    */
@@ -142,7 +153,7 @@ void setup() {
   /**
    * Wifi Server for configuration
    */
-//  tft.println("Starting remote configuration server...");
+  Serial.println("Starting remote configuration server...");
   wifiServer.begin();
 
 //  tft.println("End of booting process.");
@@ -151,11 +162,13 @@ void setup() {
 }
 
 void loop() {
-  getCurrentTemp();
-  getCurrentHumi();
+  Serial.println("Start Loop...");
+  //getCurrentTemp();
+  //getCurrentHumi();
   refreshTime();
-  configMode();
-  delay(100);
+  //configMode();
+  Serial.println("End Loop...");
+  delay(1000);
 }
 
 /**
@@ -174,7 +187,9 @@ void checkAlarm(){
 bool wifiConnect(){
   onWifi = false;
   int retries = 0;
+  yield();
   Serial.printf("Connecting to %s ", ssid);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
       delay(500);
@@ -252,7 +267,7 @@ String hourMinuteToTime(int hour, int minute){
 /*
  * Returns current time in HH:MM format
  */
-String refreshTime(){
+void refreshTime(){
   //Time
   time_t now;
   struct tm * timeinfo;
@@ -289,35 +304,26 @@ String refreshTime(){
       dateChanged(prevDate, currDate);
     }
   }
+  Serial.println("Leaving refreshTime");
 }
 
 /**
  * Displays time string erasing the previous one
  */
 void displayTime(){
-/*  tft.setTextSize(10);
-  tft.setCursor(xTime, yTime);
-  tft.setTextColor(tftBG);
   yield();
-  tft.println(prevTime);
-  yield();
-  tft.setCursor(xTime, yTime);
-  tft.setTextColor(tftTimeFG);
-  yield();
-  tft.println(currTime);
-  yield();*/
+  lcd.home ();                   // go home
+  lcd.print(currTime);
 }
+
 /**
  * Displays date string 
  */
 void displayDate(){
-/*  tft.fillRect(14, 94, 192, 30, ILI9341_BLACK);
-  tft.setTextSize(3);
-  tft.setCursor(26, 94);
-  tft.setTextColor(ILI9341_LGREEN);
-  yield();
-  tft.println(currDate);*/
+  lcd.setCursor ( 0, 1 );        // go to the next line
+  lcd.print (currDate);
 }
+
 /**
  * Displays temperature
  */
@@ -412,7 +418,7 @@ float getCurrentHumi(){
  * Event for change of time HH:MM
  */
 void timeChanged(String prevTime, String currTime){
-  //Serial.println("timeChanged event fired!");
+  Serial.println("timeChanged event fired!");
   displayTime();
   if(currTime == alarmTime){
     if(doAlarm == true){
@@ -427,11 +433,11 @@ void timeChanged(String prevTime, String currTime){
  * Event for change of date weekDay, day de Month de Year
  */
 void dateChanged(String prevDate, String currDate){
-  //Serial.print("dateChanged event fired! ");
-  //Serial.println(currDate);
+  Serial.print("dateChanged event fired! ");
+  Serial.println(currDate);
   displayDate();
   //New day, lets check for the next alarm
-  checkAlarm();
+  //checkAlarm();
 }
 
 /**
