@@ -1,7 +1,18 @@
 /**
  * GLOBAL PIN CONFIGURATION
  */
-const int DHT_OUT = 5;
+const int DHT_OUT = 14
+
+
+
+
+
+
+
+
+
+
+;
 
 /**
  * EEPROM libraries and resources
@@ -30,6 +41,7 @@ hd44780_I2Cexp lcd; // declare lcd object: auto locate & config display for hd44
  */
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#include <ArduinoOTA.h>
 //Absolute path to file containing WiFi credentials
 //const char* ssid       = "MyApSSID";
 //const char* password   = "MyApPassphrase";
@@ -37,6 +49,16 @@ hd44780_I2Cexp lcd; // declare lcd object: auto locate & config display for hd44
 const int connTimeout = 10; //Seconds
 
 WiFiServer wifiServer(1234);
+
+/** 
+ *  WS2812
+ */
+#include <NeoPixelBus.h>
+const uint8_t PixelPin = 13;  // ignored for Esp8266
+
+const uint16_t PixelCount = 8; // this example assumes 4 pixels, making it smaller will cause a failure
+NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
+RgbColor red(255, 0, 0);
 
 
 /** 
@@ -69,7 +91,7 @@ float    currTemp = 0;
 float    prevHumi = 0;
 float    currHumi = 0;
 bool     onWifi = false;
-String   weekDays[] = {"", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sum"};
+String   weekDays[] = {"", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
 String   months[] = {"", " Jan ", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 int      pinTouchR = 14; 
 int      pinTouchM = 13; 
@@ -119,13 +141,20 @@ void setup() {
   
   /**
    * TFT DISPLAY
-   */
-  // Switch on the backlight
-  //pinMode ( BACKLIGHT_PIN, OUTPUT );
-  //digitalWrite ( BACKLIGHT_PIN, HIGH );
-  
+   */  
   lcd.begin(16,2);               // initialize the lcd 
   lcd.home ();                   // go home
+
+  /**
+   * Pixels
+   */  
+  // this resets all the neopixels to an off state
+  strip.Begin();
+  strip.Show();
+  for(int i =0; i<8; i++){
+     strip.SetPixelColor(i, red);
+  }
+  strip.Show();
     
   /**
    * Temperature and humidity sensor
@@ -162,13 +191,56 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("Start Loop...");
-  //getCurrentTemp();
-  //getCurrentHumi();
+  getCurrentTemp();
+  getCurrentHumi();
   refreshTime();
   //configMode();
-  Serial.println("End Loop...");
+  ArduinoOTA.handle();
   delay(1000);
+}
+
+void setupOTA() {
+  // Hostname defaults to esp8266-[ChipID]
+  ArduinoOTA.setHostname(ota_hostname);
+
+  // No authentication by default
+  ArduinoOTA.setPassword(ota_password);
+
+  ArduinoOTA.onStart([]() {
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH) {
+      type = "sketch";
+    } else { // U_FS
+      type = "filesystem";
+    }
+
+    // NOTE: if updating FS this would be the place to unmount FS using FS.end()
+    Serial.println("Start updating " + type);
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) {
+      Serial.println("Auth Failed");
+    } else if (error == OTA_BEGIN_ERROR) {
+      Serial.println("Begin Failed");
+    } else if (error == OTA_CONNECT_ERROR) {
+      Serial.println("Connect Failed");
+    } else if (error == OTA_RECEIVE_ERROR) {
+      Serial.println("Receive Failed");
+    } else if (error == OTA_END_ERROR) {
+      Serial.println("End Failed");
+    }
+  });
+  ArduinoOTA.begin();
+  Serial.println("Ready");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 }
 
 /**
@@ -304,7 +376,6 @@ void refreshTime(){
       dateChanged(prevDate, currDate);
     }
   }
-  Serial.println("Leaving refreshTime");
 }
 
 /**
@@ -437,25 +508,27 @@ void dateChanged(String prevDate, String currDate){
   Serial.println(currDate);
   displayDate();
   //New day, lets check for the next alarm
-  //checkAlarm();
+  checkAlarm();
 }
 
 /**
  * Event for change of temperature
  */
 void tempChanged(float prevTemp, float currTemp){
-  //Serial.print("tempChanged event fired! ");
-  //Serial.println(currTemp);
+  Serial.print("tempChanged event fired! ");
+  Serial.println(currTemp);
   displayTemp();
 }
+
 /**
  * Event for change of humidity
  */
 void humiChanged(float prevHumi, float currHumi){
-  //Serial.println("humiChanged event fired!");
+  Serial.println("humiChanged event fired!");
+  Serial.println(currHumi);
   displayHumi();
-  
 }
+
 void configOn(){
   Serial.println("Entered config mode");
 }
