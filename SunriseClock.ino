@@ -57,7 +57,7 @@ WiFiServer wifiServer(1234);
 const uint8_t PixelPin = 13;  // ignored for Esp8266
 
 const uint16_t PixelCount = 8; // this example assumes 4 pixels, making it smaller will cause a failure
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
+NeoPixelBus<NeoGrbFeature, NeoEsp8266Dma800KbpsMethod> strip(PixelCount, PixelPin);
 RgbColor red(255, 0, 0);
 
 
