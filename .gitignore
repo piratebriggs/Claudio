@@ -5,3 +5,4 @@
 .vscode/ipch
 
 /lib/wifi_credentials
+/env.bat

@@ -53,11 +53,8 @@ RgbColor red(255, 0, 0);
 /** 
  *  RGB
  */
-
-const uint8_t PinR = 13;
-const uint8_t PinG = 14;
-const uint8_t PinB = 12;
-
+#include <RGB_LED.h>
+RGB_LED LED(13, 14, 12);
 
 /** 
  *  TIME libraries and resources
@@ -128,28 +125,8 @@ void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
 
-  pinMode(PinR, OUTPUT);
-  pinMode(PinG, OUTPUT);
-  pinMode(PinB, OUTPUT);
-
-  analogWrite(PinR, 0);
-  analogWrite(PinG, 0);
-  analogWrite(PinB, 0);
-
-  delay(1000);
-  analogWrite(PinR, 255/2);
-  analogWrite(PinG, 0);
-  analogWrite(PinB, 0);
-
-  delay(1000);
-  analogWrite(PinR, 0);
-  analogWrite(PinG, 255/2);
-  analogWrite(PinB, 0);
-
-  delay(1000);
-  analogWrite(PinR, 0);
-  analogWrite(PinG, 0);
-  analogWrite(PinB, 255/2);
+  analogWriteFreq(2000);
+  LED.setFunction(Fade);
 
   /**
    * EEPROM
@@ -207,17 +184,26 @@ void setup() {
   wifiServer.begin();
 
 //  tft.println("End of booting process.");
-   
+   setupOTA();
 
 }
 
+unsigned long previousTime = millis();
+
+const unsigned long interval = 1000;
+
 void loop() {
-  getCurrentTemp();
-  getCurrentHumi();
-  refreshTime();
-  //configMode();
   ArduinoOTA.handle();
-  delay(1000);
+  LED.run();
+
+  unsigned long diff = millis() - previousTime;
+  if(diff > interval) {
+    getCurrentTemp();
+    getCurrentHumi();
+    refreshTime();
+    //configMode();
+    previousTime += diff;
+  }
 }
 
 void setupOTA() {
@@ -420,50 +406,17 @@ void displayDate(){
  * Displays temperature
  */
 void displayTemp(){
-/*  int bgColor = 0;
-  if(currTemp == prevTemp){
-    bgColor = ILI9341_LGREEN;
-  }else if(currTemp < prevTemp){
-    bgColor = ILI9341_LCYAN;
-  }else{
-    bgColor = ILI9341_LORANGE;
-  }
-  
-  tft.setTextColor(ILI9341_BLACK);
-  yield();
-  tft.fillRect(14, 170, 92, 60, bgColor);
-  tft.drawRect(14, 170, 92, 60, ILI9341_WHITE);
-  yield();
-  tft.setTextSize(2);
-  tft.setCursor(34, 174);
-  tft.print("TEMP");
-  tft.setTextSize(3);
-  tft.setCursor(16, 200);
-  tft.print(currTemp);*/
+  lcd.setCursor ( 6, 0 );        // go to the next line
+  lcd.printf ("%.1f", currTemp);
+  lcd.print ("C");
 }
 /**
  * Displays relative humidity
  */
 void displayHumi(){
-/*  int bgColor = 0;
-  if(currHumi == prevHumi){
-    bgColor = ILI9341_LGREEN;
-  }else if(currHumi < prevHumi){
-    bgColor = ILI9341_LCYAN;
-  }else{
-    bgColor = ILI9341_LORANGE;
-  }
-  tft.setTextColor(ILI9341_BLACK);
-  yield();
-  tft.fillRect(113, 170, 92, 60, bgColor);
-  tft.drawRect(113, 170, 92, 60, ILI9341_WHITE);
-  yield();
-  tft.setTextSize(2);
-  tft.setCursor(135, 174);
-  tft.print("H.R.");
-  tft.setTextSize(3);
-  tft.setCursor(115, 200);
-  tft.print(currHumi);*/
+  lcd.setCursor ( 12, 0 );        // go to the next line
+  lcd.printf ("%.0f", currHumi);
+  lcd.print ("%");
 }
 /**
  * Displays Alarm Time 
@@ -487,7 +440,7 @@ void displayAlarm(){
 float getCurrentTemp(){
   prevTemp = currTemp;
   currTemp = dht.readTemperature();;
-  if(prevTemp != currTemp){
+  if(!isnan(currTemp) && prevTemp != currTemp){
     tempChanged(prevTemp , currTemp);
   }
   return currTemp;
@@ -498,7 +451,7 @@ float getCurrentTemp(){
 float getCurrentHumi(){
   prevHumi = currHumi;
   currHumi = dht.readHumidity();
-  if(prevHumi != currHumi){
+  if(!isnan(currHumi) && prevHumi != currHumi){
     humiChanged(prevHumi , currHumi);
   }
   return currHumi;
@@ -536,8 +489,8 @@ void dateChanged(String prevDate, String currDate){
  * Event for change of temperature
  */
 void tempChanged(float prevTemp, float currTemp){
-  Serial.print("tempChanged event fired! ");
-  Serial.println(currTemp);
+//  Serial.print("tempChanged event fired! ");
+//  Serial.println(currTemp);
   displayTemp();
 }
 
@@ -545,8 +498,8 @@ void tempChanged(float prevTemp, float currTemp){
  * Event for change of humidity
  */
 void humiChanged(float prevHumi, float currHumi){
-  Serial.println("humiChanged event fired!");
-  Serial.println(currHumi);
+//  Serial.println("humiChanged event fired!");
+//  Serial.println(currHumi);
   displayHumi();
 }
 
