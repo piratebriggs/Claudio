@@ -1,18 +1,7 @@
 /**
  * GLOBAL PIN CONFIGURATION
  */
-const int DHT_OUT = 14
-
-
-
-
-
-
-
-
-
-
-;
+const int DHT_OUT = 3;
 
 /**
  * EEPROM libraries and resources
@@ -54,11 +43,18 @@ WiFiServer wifiServer(1234);
  *  WS2812
  */
 #include <NeoPixelBus.h>
-const uint8_t PixelPin = 13;  // ignored for Esp8266
 
 const uint16_t PixelCount = 8; // this example assumes 4 pixels, making it smaller will cause a failure
-NeoPixelBus<NeoGrbFeature, NeoEsp8266Dma800KbpsMethod> strip(PixelCount, PixelPin);
+NeoPixelBus<NeoGrbFeature, NeoEsp8266Dma800KbpsMethod> strip(PixelCount, 1);
 RgbColor red(255, 0, 0);
+
+/** 
+ *  RGB
+ */
+
+const uint8_t PinR = 13;
+const uint8_t PinG = 14;
+const uint8_t PinB = 12;
 
 
 /** 
@@ -129,7 +125,30 @@ void setup() {
    */
   Serial.begin(115200);
   Serial.setDebugOutput(true);
-  
+
+  pinMode(PinR, OUTPUT);
+  pinMode(PinG, OUTPUT);
+  pinMode(PinB, OUTPUT);
+
+  analogWrite(PinR, 0);
+  analogWrite(PinG, 0);
+  analogWrite(PinB, 0);
+
+  delay(1000);
+  analogWrite(PinR, 255/2);
+  analogWrite(PinG, 0);
+  analogWrite(PinB, 0);
+
+  delay(1000);
+  analogWrite(PinR, 0);
+  analogWrite(PinG, 255/2);
+  analogWrite(PinB, 0);
+
+  delay(1000);
+  analogWrite(PinR, 0);
+  analogWrite(PinG, 0);
+  analogWrite(PinB, 255/2);
+
   /**
    * EEPROM
    */
