@@ -1,3 +1,5 @@
+#include <SunriseClock.h>
+
 /**
  * GLOBAL PIN CONFIGURATION
  */
@@ -376,7 +378,7 @@ void refreshTime(){
       wDay = 7;
     }
     String calDate = "";
-    char cDate[30]=" ";
+    //char cDate[30]=" ";
     //Serial.println(weekDays[wDay]);
     //sprintf(cDate, "%s, %i de %s de %i", weekDays[wDay], timeinfo->tm_mday, months[(timeinfo->tm_mon + 1)],(timeinfo->tm_year + 1900)); 
     calDate = calDate + weekDays[wDay];
@@ -769,6 +771,7 @@ void loadConfiguration(){
   minLux = getMinLux();
   minBrightness = getMinBrightness(); 
 }
+
 /**
  * Boot Wait
  * Address 0
