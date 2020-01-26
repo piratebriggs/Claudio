@@ -4,6 +4,10 @@
  * GLOBAL PIN CONFIGURATION
  */
 const int DHT_OUT = 3;
+const int PIN_R = 13;
+const int PIN_G = 14;
+const int PIN_B = 12;
+// Also using SPI, pins 4&5
 
 /**
  * EEPROM libraries and resources
@@ -42,19 +46,10 @@ const int connTimeout = 10; //Seconds
 WiFiServer wifiServer(1234);
 
 /** 
- *  WS2812
- */
-#include <NeoPixelBus.h>
-
-const uint16_t PixelCount = 8; // this example assumes 4 pixels, making it smaller will cause a failure
-NeoPixelBus<NeoGrbFeature, NeoEsp8266Dma800KbpsMethod> strip(PixelCount, 1);
-RgbColor red(255, 0, 0);
-
-/** 
  *  RGB
  */
 #include <RGB_LED.h>
-RGB_LED LED(13, 14, 12);
+RGB_LED LED(PIN_R, PIN_G, PIN_B);
 
 /** 
  *  TIME libraries and resources
@@ -64,13 +59,6 @@ const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = 0;
 const int   daylightOffset_sec = 0;
  
-/**
- * PWM Constants
- */
-const int freq = 5000;
-const int tftledChannel = 0;
-const int resolution = 8;
-
  
 /**
  * GLOBALS
@@ -131,45 +119,42 @@ void setup() {
   /**
    * EEPROM
    */
-  //EEPROM.begin(EEPROM_SIZE);
+  EEPROM.begin(EEPROM_SIZE);
+  
   /**
    * Loads EEPROM configuration
    */
-  //loadConfiguration();
+  loadConfiguration();
   
   /**
    * TFT DISPLAY
    */  
   lcd.begin(16,2);               // initialize the lcd 
-  lcd.home ();                   // go home
+  lcd.home();
 
-  /**
-   * Pixels
-   */  
-  // this resets all the neopixels to an off state
-  strip.Begin();
-  strip.Show();
-  for(int i =0; i<8; i++){
-     strip.SetPixelColor(i, red);
-  }
-  strip.Show();
-    
+   
   /**
    * Temperature and humidity sensor
    */
   dht.begin();    
-//  tft.print("Connecting to WiFi AP "); 
-//  tft.println(ssid);     
+
+  lcd.print("Connecting to WiFi AP "); 
+  lcd.setCursor ( 0, 1 );        // go to the next line
+  lcd.print(ssid);     
+  lcd.home();
+
   /**
    * Wifi connect
    */
   wifiConnect();
   if(onWifi == true){
-//    tft.print("   Connection succeed, obtained IP ");
-//    tft.println(WiFi.localIP());
+    lcd.print("Connected, IP:");
+    lcd.setCursor ( 0, 1 );        // go to the next line
+    lcd.print(WiFi.localIP());
   }else{
-    //tft.println("   Connection failed. Unexpected operation results.");
+    lcd.print("Connect failed.");
   }
+
   Serial.printf("Obtaining NTP time from remote server...");
   /**
    * NTP Time
@@ -183,9 +168,7 @@ void setup() {
   Serial.println("Starting remote configuration server...");
   wifiServer.begin();
 
-//  tft.println("End of booting process.");
    setupOTA();
-
 }
 
 unsigned long previousTime = millis();
@@ -201,7 +184,7 @@ void loop() {
     getCurrentTemp();
     getCurrentHumi();
     refreshTime();
-    //configMode();
+    configMode();
     previousTime += diff;
   }
 }
@@ -259,10 +242,10 @@ void checkAlarm(){
   doAlarm = true;
   displayAlarm(); 
 }
+
 /**
  * Connects to WIFI
  */
-
 bool wifiConnect(){
   onWifi = false;
   int retries = 0;
